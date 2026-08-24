@@ -105,7 +105,7 @@ Traps to think about:
 Check:
 
 ```bash
-python -c "from recipes_api.models import Recipe, Ingredient, Tag; print('models ok')"
+python -c "from src.models import Recipe, Ingredient, Tag; print('models ok')"
 ```
 
 ---
@@ -158,13 +158,13 @@ tags→names mapping is a router job.)
 Check:
 
 ```bash
-python -c "from recipes_api.schemas import RecipeCreate; print(RecipeCreate(name='x', servings=2, prep_min=5, cook_min=10))"
+python -c "from src.schemas import RecipeCreate; print(RecipeCreate(name='x', servings=2, prep_min=5, cook_min=10))"
 ```
 
 Try feeding it bad input and watch it fail:
 
 ```bash
-python -c "from recipes_api.schemas import RecipeCreate; RecipeCreate(name='', servings=0, prep_min=-1, cook_min=10)"  # expect ValidationError
+python -c "from src.schemas import RecipeCreate; RecipeCreate(name='', servings=0, prep_min=-1, cook_min=10)"  # expect ValidationError
 ```
 
 ---
@@ -201,14 +201,14 @@ Traps (the meat of this step — figure each out):
 Check:
 
 ```bash
-python -c "from recipes_api.routers.recipes import router; print(len(router.routes), 'routes')"
+python -c "from src.routers.recipes import router; print(len(router.routes), 'routes')"
 ```
 
 ---
 
 ## Step 7 — `routers/tags.py`
 
-**Goal**: tags with real aggregation.
+- [x] **Goal**: tags with real aggregation.
 
 Spec:
 - `GET /tags` → name + `recipe_count`. **Including tags with zero recipes.**
@@ -224,7 +224,7 @@ Traps:
 Check:
 
 ```bash
-python -c "from recipes_api.routers.tags import router; print(len(router.routes), 'routes')"
+python -c "from src.routers.tags import router; print(len(router.routes), 'routes')"
 ```
 
 ---
@@ -244,7 +244,15 @@ Check:
 uvicorn recipes_api.main:app --reload   # then hit http://127.0.0.1:8000/docs
 curl -s localhost:8000/health
 curl -s -X POST localhost:8000/recipes -H 'content-type: application/json' \
-  -d '{"name":"Pasta","servings":2,"prep_min":5,"cook_min":10,"ingredients":[{"name":"pasta","quantity":200,"unit":"g"}],"tags":["italian","quick"]}'
+  -d '{
+    "name":"Pasta",
+    "servings":2,
+    "prep_minutes":5,
+    "cook_minutes":10,
+    "ingredients":[{"name":"pasta","quantity":200,"unit":"g"}],
+    "instruction_steps":[{"number":1,"text":"Boil water"}],
+    "tags":["italian","quick"]
+  }'
 curl -s "localhost:8000/recipes?tag=italian"
 ```
 

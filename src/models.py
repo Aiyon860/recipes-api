@@ -56,9 +56,6 @@ class Tag(SQLModel, table=True):
 
     recipe_tags: list["RecipeTag"] = Relationship(back_populates="tag", cascade_delete=True)
 
-    created_at: datetime = Field(default_factory=utc_now, sa_column=Column(DateTime(timezone=True)))
-    updated_at: datetime = Field(default_factory=utc_now, sa_column=Column(DateTime(timezone=True), onupdate=utc_now))
-
 
 class RecipeTag(SQLModel, table=True):
     __tablename__ = "t_recipe_tags"

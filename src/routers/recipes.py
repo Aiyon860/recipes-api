@@ -83,7 +83,7 @@ def index(
         data=recipes
     )
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=RecipeShowResponse, status_code=status.HTTP_201_CREATED)
 def store(recipe: RecipeCreate, session: SessionDep):
     # Atomic Transaction with Auto Commit
     with session.begin():
@@ -165,7 +165,7 @@ def show(session: SessionDep, id: int):
         )
     )
 
-@router.api_route("/{id}", methods=["PUT", "PATCH"])
+@router.api_route("/{id}", methods=["PUT", "PATCH"], response_model=RecipeShowResponse)
 def update(session: SessionDep, id: int, payload: RecipeUpdate):
     with session.begin():
         stmt = select(Recipe).options(selectinload(Recipe.recipe_tags).options(selectinload(RecipeTag.tag))).options(selectinload(Recipe.ingredients)).where(Recipe.id == id)
