@@ -1,0 +1,43 @@
+# --- Environment & Credentials ---
+# Never commit your active secrets, keys, or configurations
+.env
+.env.*
+!.env.example
+*.pod
+
+# --- Python Virtual Environments ---
+# Keeps heavy library directories out of your repository
+.venv/
+venv/
+ENV/
+env/
+__pypackages__/
+
+# --- Python Cache & Compiled Files ---
+# Automatically generated during runtime
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# --- FastAPI & Application Specific ---
+# Exclude local SQLite database binaries or dynamic log files
+*.db
+*.sqlite3
+*.log
+
+# --- Testing & Code Quality ---
+# Created by test runners and linters
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# --- IDEs & Editors ---
+# Developer-specific editor configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
