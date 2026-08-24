@@ -8,6 +8,7 @@ from pydantic import ConfigDict
 from sqlmodel import Field, SQLModel
 
 from src.enums import DifficultyEnum
+from src.models import Tag
 
 
 class IngredientIn(SQLModel):
@@ -42,6 +43,11 @@ class TagCreate(SQLModel):
 class TagRead(SQLModel):
     name: str
     recipe_count: int
+
+class TagUpdate(SQLModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field(min_length=1)
 
 class RecipeCreate(SQLModel):
     model_config = ConfigDict(str_strip_whitespace=True)
@@ -117,3 +123,13 @@ class RecipeIndexResponse(GenericResponse):
 
 class RecipeShowResponse(GenericResponse):
     data: RecipeRead
+
+class TagIndexResponse(GenericResponse):
+    page: int
+    size: int
+    total: int
+    pages: int
+    data: list[TagRead]
+
+class TagShowResponse(GenericResponse):
+    data: Tag
