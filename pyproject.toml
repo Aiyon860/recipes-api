@@ -1,0 +1,18 @@
+[project]
+name = "python-api"
+version = "0.0.1"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]",
+    "uvicorn[standard]",
+    "sqlalchemy>=2.0",
+    "alembic",
+    "pydantic",
+    "pydantic-settings",
+    "sqlmodel",
+    "pytest",
+    "httpx2"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

@@ -73,6 +73,12 @@ Spec:
 - `get_db` — yields one session per request, guaranteed closed. FastAPI calls it
   a *dependency*; the yield variant is special. Why?
 
+Traps:
+- SQLite FK constraints are OFF by default (even with `ON DELETE CASCADE`
+  in your model). Verify a delete actually cascades — you may need
+  `PRAGMA foreign_keys=ON` per connection (via `event.listens_for` on
+  `connect`).
+
 Check:
 
 ```bash
@@ -231,7 +237,7 @@ python -c "from src.routers.tags import router; print(len(router.routes), 'route
 
 ## Step 8 — `main.py`
 
-**Goal**: app assembly.
+- [x] **Goal**: app assembly.
 
 Spec:
 - FastAPI app, sensible title/version/description.
@@ -260,7 +266,7 @@ curl -s "localhost:8000/recipes?tag=italian"
 
 ## Step 9 — `tests/test_recipes.py`
 
-**Goal**: isolation, no real DB pollution. pytest + `TestClient`.
+- [x] **Goal**: isolation, no real DB pollution. pytest + `TestClient`.
 
 Spec — the fixture:
 - in-memory SQLite engine per test
@@ -269,16 +275,16 @@ Spec — the fixture:
 - cleanup between tests
 
 Then cover, at minimum:
-1. create → 201, ingredients+tags echoed
-2. missing recipe → 404
-3. pagination: 3 items, `size=2` page 1 → 2, page 2 → 1
-4. tag filter isolates results
-5. search is case-insensitive substring
-6. PATCH changes only provided field
-7. DELETE cascades (verify ingredient rows actually gone)
-8. duplicate tag → 409
-9. invalid payloads → 422 (servings=0, empty name, negative minutes)
-10. tag counts: tag on 2 recipes → `recipe_count: 2`; orphan tag → still listed with 0
+1. `test_create_recipe` — POST /recipes → 201, ingredients+tags echoed
+2. `test_get_recipe_not_found` — GET /recipes/999 → 404
+3. `test_list_recipes_pagination` — page=1&size=2 → 2 items, page=2 → 1 item
+4. `test_list_recipes_filter_by_tag` — GET /recipes?tag=italian → only italian
+5. `test_list_recipes_search_by_name` — GET /recipes?search=pasta → case-insensitive
+6. `test_update_recipe_partial` — PATCH /recipes/{id} → only provided fields change
+7. `test_delete_recipe_cascades_ingredients` — DELETE → ingredient rows gone
+8. `test_create_recipe_validation_error` — bad data → 422
+
+> Tag tests (duplicate 409, recipe counts, orphan tag) are in `test_tags.py` — see Step 9b.
 
 Trap: dependency override is per-app global state — why must it be cleared after
 each test? What happens to tests running after a dirty override?
@@ -286,7 +292,37 @@ each test? What happens to tests running after a dirty override?
 Check:
 
 ```bash
-pytest -q
+pytest tests/test_recipes.py -q
+```
+
+---
+
+## Step 9b — `tests/test_tags.py`
+
+**Goal**: separate tag tests for isolation and clarity. Same fixture pattern as Step 9.
+
+Spec — the fixture:
+- same as Step 9: in-memory SQLite, override `get_db`, cleanup
+- pre-seed 2-3 tags + 1-2 recipes with tags for count tests
+
+Then cover, at minimum:
+1. `test_create_tag` — POST /tags → 201, id + name returned
+2. `test_duplicate_tag_409` — POST same tag twice → 409
+3. `test_list_tags` — GET /tags → returns all tags sorted by name
+4. `test_tag_recipe_count` — tag on 2 recipes → recipe_count: 2
+5. `test_orphan_tag_listed` — tag with 0 recipes → recipe_count: 0
+6. `test_create_tag_empty_name` — POST /tags with "" → 422
+7. `test_create_tag_long_name` — POST /tags with 51-char → 422
+
+Trap: zero-recipe tags need a LEFT JOIN, not INNER. Verify the SQL in the
+`GET /tags` endpoint actually keeps them. Count comes from
+`func.count(Tag.recipes)` + `group_by(Tag.id)` — what does count return on
+zero rows? (Hint: not NULL.)
+
+Check:
+
+```bash
+pytest tests/test_tags.py -q
 ```
 
 ---

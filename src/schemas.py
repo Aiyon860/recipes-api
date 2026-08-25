@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, field_serializer
 from sqlmodel import Field, SQLModel
 
 from src.enums import DifficultyEnum
@@ -24,6 +24,10 @@ class IngredientOut(SQLModel):
     quantity: Decimal
     unit: str
     position: int
+
+    @field_serializer('quantity')
+    def serialize_quantity(self, v: Decimal) -> str:
+        return f"{v:.3f}"
 
 class StepIn(SQLModel):
     model_config = ConfigDict(str_strip_whitespace=True)
