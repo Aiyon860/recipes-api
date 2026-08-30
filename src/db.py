@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy import Engine, create_engine, event
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session
 
@@ -11,18 +11,14 @@ setting = get_settings()
 
 # =============================================
 engine = create_engine(
-    setting.database_url,
-    echo=setting.debug,
-    connect_args={"check_same_thread": False}
+    setting.database_url, echo=setting.debug, connect_args={"check_same_thread": False}
 )
 SessionLocal = sessionmaker(
-    engine,
-    class_=Session,
-    expire_on_commit=False,
-    autoflush=False
+    engine, class_=Session, expire_on_commit=False, autoflush=False
 )
 
-@event.listens_for(Engine, "connect")
+
+@event.listens_for(engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
     # the sqlite3 driver will not set PRAGMA foreign_keys
     # if autocommit=False; set to True temporarily
@@ -35,13 +31,17 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 
     # restore previous autocommit setting
     dbapi_connection.autocommit = ac
+
+
 # =============================================
+
 
 # =============================================
 def get_db():
     # automatically close the connection
     with SessionLocal() as session:
         yield session
+
 
 SessionDep = Annotated[Session, Depends(get_db)]
 # =============================================
