@@ -52,7 +52,7 @@ class Tag(SQLModel, table=True):
     __tablename__ = "t_tags"
 
     id: int | None = Field(primary_key=True, default=None)
-    name: str = Field(unique=True, index=True)
+    name: str = Field(unique=True, index=True, min_length=1, max_length=50)
 
     recipe_tags: list["RecipeTag"] = Relationship(back_populates="tag", cascade_delete=True)
 

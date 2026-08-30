@@ -1,10 +1,9 @@
-from this import s
-
-import httpx2
+import httpx2 as httpx
 import pytest
 from sqlmodel import Session, func, select
 
 from src.models import Ingredient
+
 
 class TestRecipes():
 
@@ -25,7 +24,7 @@ class TestRecipes():
             "tags": ["breakfast"]
         }
         res = self.client.post("/recipes", json=payload)
-        assert res.status_code == httpx2.codes.CREATED
+        assert res.status_code == httpx.codes.CREATED
 
         data = res.json()["data"]
         targets = ["name", "ingredients", "tags"]
@@ -40,7 +39,7 @@ class TestRecipes():
     def test_get_recipe_not_found(self):
         """GET /recipes/999 → 404"""
         res = self.client.get("/recipes/999")
-        assert res.status_code == httpx2.codes.NOT_FOUND
+        assert res.status_code == httpx.codes.NOT_FOUND
 
         res_dict = res.json()
         assert "detail" in res_dict
@@ -97,7 +96,7 @@ class TestRecipes():
         ]
         for payload in payloads:
             res = self.client.post("/recipes", json=payload)
-            assert res.status_code == httpx2.codes.CREATED
+            assert res.status_code == httpx.codes.CREATED
 
         params_array = [
             {"page": 1, "size": 2},
@@ -105,7 +104,7 @@ class TestRecipes():
         ]
         for params in params_array:
             res = self.client.get("/recipes", params=params)
-            assert res.status_code == httpx2.codes.OK
+            assert res.status_code == httpx.codes.OK
 
             res_dict = res.json()
             total = res_dict["total"]
@@ -150,11 +149,11 @@ class TestRecipes():
         ]
         for payload in payloads:
             res = self.client.post("/recipes", json=payload)
-            assert res.status_code == httpx2.codes.CREATED
+            assert res.status_code == httpx.codes.CREATED
 
         param = {"tag": "italian"}
         res = self.client.get("/recipes", params=param)
-        assert res.status_code == httpx2.codes.OK
+        assert res.status_code == httpx.codes.OK
 
         data = res.json()["data"]
         assert len(data) == 1
@@ -211,11 +210,11 @@ class TestRecipes():
         ]
         for payload in payloads:
             res = self.client.post("/recipes", json=payload)
-            assert res.status_code == httpx2.codes.CREATED
+            assert res.status_code == httpx.codes.CREATED
 
         param = {"search": "pasta"}
         res = self.client.get("/recipes", params=param)
-        assert res.status_code == httpx2.codes.OK
+        assert res.status_code == httpx.codes.OK
 
         data = res.json()["data"]
         assert len(data) == 1
@@ -241,7 +240,7 @@ class TestRecipes():
             "tags": ["breakfast"]
         }
         res = self.client.post("/recipes", json=original)
-        assert res.status_code == httpx2.codes.CREATED
+        assert res.status_code == httpx.codes.CREATED
 
         data = res.json()["data"]
         recipe_id = data["id"]
@@ -251,7 +250,7 @@ class TestRecipes():
             "servings": 4
         }
         res = self.client.patch(f"/recipes/{recipe_id}", json=update_payload)
-        assert res.status_code == httpx2.codes.OK
+        assert res.status_code == httpx.codes.OK
 
         data = res.json()["data"]
         # Changed
@@ -283,14 +282,14 @@ class TestRecipes():
             "tags": ["breakfast"]
         }
         res = self.client.post("/recipes", json=payload)
-        assert res.status_code == httpx2.codes.CREATED
+        assert res.status_code == httpx.codes.CREATED
 
         recipe_id = res.json()["data"]["id"]
         res = self.client.delete(f"/recipes/{recipe_id}")
-        assert res.status_code == httpx2.codes.NO_CONTENT
+        assert res.status_code == httpx.codes.NO_CONTENT
 
         res = self.client.get(f"/recipes/{recipe_id}")
-        assert res.status_code == httpx2.codes.NOT_FOUND
+        assert res.status_code == httpx.codes.NOT_FOUND
 
         # Check ingredients table directly as we don't have ingredient endpoints
         with Session(db_engine) as session:
@@ -310,4 +309,4 @@ class TestRecipes():
           "tags": ["test"]
         }
         res = self.client.post("/recipes", json=payload)
-        assert res.status_code == httpx2.codes.UNPROCESSABLE_CONTENT
+        assert res.status_code == httpx.codes.UNPROCESSABLE_CONTENT

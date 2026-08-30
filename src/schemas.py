@@ -42,7 +42,7 @@ class StepOut(SQLModel):
 class TagCreate(SQLModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    name: str = Field(min_length=1)
+    name: str = Field(min_length=1, max_length=50)
 
 class TagRead(SQLModel):
     name: str

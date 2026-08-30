@@ -329,6 +329,8 @@ pytest tests/test_tags.py -q
 
 ## Step 10 — `README.md`
 
+- [x] **Goal**: quickstart, test command, endpoint table.
+
 Spec:
 - quickstart: activate venv, migrate, run, open `/docs`
 - test command
@@ -342,8 +344,8 @@ This one is documentation; write it like a human would consume it.
 
 - [x] fresh DB + `alembic upgrade head` → clean
 - [x] `uvicorn recipes_api.main:app --reload` → `/docs` renders, every endpoint 200/4xx as designed
-- [ ] `pytest -q` all green
-- [ ] README quickstart reproduces from scratch
+- [x] `pytest -q` all green
+- [x] README quickstart reproduces from scratch
 
 ---
 

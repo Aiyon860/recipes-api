@@ -1,4 +1,5 @@
 import math
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
 from sqlalchemy.exc import IntegrityError
@@ -15,6 +16,7 @@ def index(
     session: SessionDep,
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=100),
+    order: Literal["asc", "desc"] = Query(default="asc")
 ):
     # Metadata
     stmt = select(func.count(Tag.id))
@@ -34,6 +36,7 @@ def index(
         .group_by(Tag.id)
         .offset(offset)
         .limit(size)
+        .order_by(Tag.name.asc() if order == "asc" else Tag.name.desc())
     )
     result = session.exec(stmt).mappings().all()
     tags = [TagRead(name=tag["name"], recipe_count=tag["recipe_count"]) for tag in result]
