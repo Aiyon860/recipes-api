@@ -357,3 +357,4 @@ This one is documentation; write it like a human would consume it.
 - [ ] soft delete: `deleted_at`, `?include_deleted`
 - [ ] seed script: 10 believable recipes with tags
 - [ ] `GET /recipes/{id}/ingredients` with totals computed on the fly
+- [ ] API versioning (e.g., `/v1/recipes`, `/v2/recipes`)

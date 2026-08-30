@@ -9,14 +9,15 @@ from src.db import SessionDep
 from src.models import RecipeTag, Tag
 from src.schemas import TagCreate, TagIndexResponse, TagRead, TagShowResponse, TagUpdate
 
-router = APIRouter(prefix="/tags", tags=["Tags"])
+router = APIRouter(prefix="/tags", tags=["v1", "Tags"])
+
 
 @router.get("", response_model=TagIndexResponse)
 def index(
     session: SessionDep,
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=100),
-    order: Literal["asc", "desc"] = Query(default="asc")
+    order: Literal["asc", "desc"] = Query(default="asc"),
 ):
     # Metadata
     stmt = select(func.count(Tag.id))
@@ -28,9 +29,9 @@ def index(
     stmt = (
         select(
             Tag.name,
-            func.coalesce(
-                func.count(distinct(RecipeTag.recipe_id))
-            , 0).label("recipe_count")
+            func.coalesce(func.count(distinct(RecipeTag.recipe_id)), 0).label(
+                "recipe_count"
+            ),
         )
         .outerjoin(RecipeTag)
         .group_by(Tag.id)
@@ -39,16 +40,14 @@ def index(
         .order_by(Tag.name.asc() if order == "asc" else Tag.name.desc())
     )
     result = session.exec(stmt).mappings().all()
-    tags = [TagRead(name=tag["name"], recipe_count=tag["recipe_count"]) for tag in result]
+    tags = [
+        TagRead(name=tag["name"], recipe_count=tag["recipe_count"]) for tag in result
+    ]
 
     return TagIndexResponse(
-        success=True,
-        data=tags,
-        page=page,
-        size=size,
-        total=total,
-        pages=pages
+        success=True, data=tags, page=page, size=size, total=total, pages=pages
     )
+
 
 @router.post("", response_model=TagShowResponse, status_code=status.HTTP_201_CREATED)
 def store(tag: TagCreate, session: SessionDep):
@@ -60,13 +59,11 @@ def store(tag: TagCreate, session: SessionDep):
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Tag with name '{new_tag.name}' already exists."
+                detail=f"Tag with name '{new_tag.name}' already exists.",
             )
 
-    return TagShowResponse(
-        success=True,
-        data=new_tag
-    )
+    return TagShowResponse(success=True, data=new_tag)
+
 
 @router.get("/{id}", response_model=TagShowResponse)
 def show(id: int, session: SessionDep):
@@ -76,13 +73,11 @@ def show(id: int, session: SessionDep):
     if not tag:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Tag with id={id} is not found."
+            detail=f"Tag with id={id} is not found.",
         )
 
-    return TagShowResponse(
-        success=True,
-        data=tag
-    )
+    return TagShowResponse(success=True, data=tag)
+
 
 @router.api_route("/{id}", methods=["PUT", "PATCH"], response_model=TagShowResponse)
 def update(id: int, payload: TagUpdate, session: SessionDep):
@@ -94,7 +89,7 @@ def update(id: int, payload: TagUpdate, session: SessionDep):
         if not tag:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Tag with id={id} is not found."
+                detail=f"Tag with id={id} is not found.",
             )
 
         # Update tag
@@ -105,13 +100,11 @@ def update(id: int, payload: TagUpdate, session: SessionDep):
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Tag with name '{payload.name}' already exists."
+                detail=f"Tag with name '{payload.name}' already exists.",
             )
 
-    return TagShowResponse(
-        success=True,
-        data=tag
-    )
+    return TagShowResponse(success=True, data=tag)
+
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(id: int, session: SessionDep):
@@ -123,7 +116,7 @@ def delete(id: int, session: SessionDep):
         if not tag:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Tag with id={id} is not found."
+                detail=f"Tag with id={id} is not found.",
             )
 
         session.delete(tag)
