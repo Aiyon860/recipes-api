@@ -8,13 +8,14 @@ from src.db import get_db
 from src.main import app
 from src.models import *
 
+
 @pytest.fixture()
 def db_engine():
     engine = create_engine(
         "sqlite+pysqlite:///:memory:",
         echo=False,
         connect_args={"check_same_thread": False},
-        poolclass=StaticPool
+        poolclass=StaticPool,
     )
 
     @event.listens_for(engine, "connect")
@@ -32,13 +33,11 @@ def db_engine():
     yield engine
     SQLModel.metadata.drop_all(engine)
 
+
 @pytest.fixture()
 def client(db_engine):
     SessionLocalTest = sessionmaker(
-        db_engine,
-        class_=Session,
-        expire_on_commit=False,
-        autoflush=False
+        db_engine, class_=Session, expire_on_commit=False, autoflush=False
     )
 
     def override_get_db():

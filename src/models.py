@@ -22,13 +22,21 @@ class Recipe(SQLModel, table=True):
     instruction_steps: list[dict] = Field(default_factory=list, sa_column=Column(JSON))
 
     ingredients: list["Ingredient"] = Relationship(
-        back_populates="recipe", cascade_delete=True,
-        sa_relationship_kwargs={"order_by": "Ingredient.position"}
+        back_populates="recipe",
+        cascade_delete=True,
+        sa_relationship_kwargs={"order_by": "Ingredient.position"},
     )
-    recipe_tags: list["RecipeTag"] = Relationship(back_populates="recipe", cascade_delete=True)
+    recipe_tags: list["RecipeTag"] = Relationship(
+        back_populates="recipe", cascade_delete=True
+    )
 
-    created_at: datetime = Field(default_factory=utc_now, sa_column=Column(DateTime(timezone=True)))
-    updated_at: datetime = Field(default_factory=utc_now, sa_column=Column(DateTime(timezone=True), onupdate=utc_now))
+    created_at: datetime = Field(
+        default_factory=utc_now, sa_column=Column(DateTime(timezone=True))
+    )
+    updated_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), onupdate=utc_now),
+    )
 
 
 class Ingredient(SQLModel, table=True):
@@ -44,17 +52,24 @@ class Ingredient(SQLModel, table=True):
 
     recipe: Recipe = Relationship(back_populates="ingredients")
 
-    created_at: datetime = Field(default_factory=utc_now, sa_column=Column(DateTime(timezone=True)))
-    updated_at: datetime = Field(default_factory=utc_now, sa_column=Column(DateTime(timezone=True), onupdate=utc_now))
+    created_at: datetime = Field(
+        default_factory=utc_now, sa_column=Column(DateTime(timezone=True))
+    )
+    updated_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), onupdate=utc_now),
+    )
 
 
 class Tag(SQLModel, table=True):
     __tablename__ = "t_tags"
 
     id: int | None = Field(primary_key=True, default=None)
-    name: str = Field(unique=True, index=True)
+    name: str = Field(unique=True, index=True, min_length=1, max_length=50)
 
-    recipe_tags: list["RecipeTag"] = Relationship(back_populates="tag", cascade_delete=True)
+    recipe_tags: list["RecipeTag"] = Relationship(
+        back_populates="tag", cascade_delete=True
+    )
 
 
 class RecipeTag(SQLModel, table=True):
