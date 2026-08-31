@@ -358,3 +358,114 @@ This one is documentation; write it like a human would consume it.
 - [ ] seed script: 10 believable recipes with tags
 - [ ] `GET /recipes/{id}/ingredients` with totals computed on the fly
 - [ ] API versioning (e.g., `/v1/recipes`, `/v2/recipes`)
+
+---
+
+## Step 12 — Authentication & Authorization (JWT Bearer Token)
+
+**Goal**: protect endpoints with JWT-based auth. 3 roles: `superadmin`, `admin_recipe`, `admin_tag`.
+
+### Roles & access matrix
+
+| Role | `/recipes` | `/tags` | `/auth` |
+|------|-----------|---------|---------|
+| `superadmin` | full CRUD | full CRUD | register, login |
+| `admin_recipe` | full CRUD | **403** | login only |
+| `admin_tag` | **403** | full CRUD | login only |
+
+### 12a — `models.py` — User model
+
+- [x] `User` table: `id` (int PK), `username` (str, unique, indexed), `hashed_password` (str), `role` (enum: `superadmin` / `admin_recipe` / `admin_tag`), `created_at`
+- [x] Import & register on `Base` so Alembic picks it up
+
+### 12b — `schemas.py` — auth schemas
+
+- [x] `TokenResponse`: `access_token` (str), `token_type` (str, default `"bearer"`)
+- [x] `TokenPayload`: `sub` (int = user_id), `role` (str), `exp` (datetime)
+- [x] `UserCreate`: `username` (str, min 3), `password` (str, min 8), `role` (enum)
+- [x] `UserRead`: `id`, `username`, `role` (no password)
+
+### 12c — `config.py` — JWT settings
+
+- [x] `secret_key` (str, env `RECIPES_SECRET_KEY`) — **must** be set in env, no default (security)
+- [x] `algorithm` (str, default `HS256`)
+- [x] `access_token_expire_minutes` (int, default 30)
+
+### 12d — Password hashing
+
+- [x] Install `passlib[bcrypt]` + `python-jose[cryptography]`
+- [x] Helper functions: `hash_password(plain)` → str, `verify_password(plain, hashed)` → bool
+
+### 12e — `routers/auth.py` — login + register
+
+- [x] `POST /auth/register` → 201, creates user, returns `UserRead`
+- [x] `POST /auth/login` → `TokenResponse` (JWT with `sub`=user_id, `role`=role, `exp`)
+- [x] Duplicate username → 409
+
+### 12f — Dependency: `get_current_user`
+
+- [ ] Extract Bearer token from `Authorization` header
+- [ ] Decode JWT → `TokenPayload`
+- [ ] Look up user in DB by `sub` (user_id)
+- [ ] Return user object (or 401 if invalid/expired/missing)
+
+### 12g — Role-based access control
+
+- [ ] `require_role(*allowed_roles)` dependency factory → returns a callable dependency
+- [ ] Usage on routes:
+  - `superadmin` → all endpoints (recipes + tags)
+  - `admin_recipe` → `/recipes` only
+  - `admin_tag` → `/tags` only
+- [ ] Apply to each route in `routers/recipes.py`, `routers/tags.py`
+- [ ] Unauthenticated → 401, authenticated but wrong role → 403
+
+### 12h — Seed admin user
+
+- [ ] Startup event or CLI script: create default `superadmin` user if no users exist
+- [ ] Credentials via env vars (`RECIPES_ADMIN_USERNAME`, `RECIPES_ADMIN_PASSWORD`)
+
+### 12i — Alembic migration
+
+- [ ] `alembic revision --autogenerate -m "add users table"`
+- [ ] `alembic upgrade head`
+- [ ] Verify `users` table exists in DB
+
+### 12j — Tests
+
+- [ ] `tests/test_auth.py`:
+  1. `test_register_user` → 201
+  2. `test_register_duplicate_409`
+  3. `test_login_success` → returns token
+  4. `test_login_wrong_password_401`
+  5. `test_protected_endpoint_no_token_401`
+  6. `test_protected_endpoint_wrong_role_403`
+  7. `test_superadmin_access_recipes`
+  8. `test_superadmin_access_tags`
+  9. `test_admin_recipe_access_recipes`
+  10. `test_admin_recipe_denied_tags`
+  11. `test_admin_tag_access_tags`
+  12. `test_admin_tag_denied_recipes`
+
+### Check:
+
+```bash
+# Register + login
+curl -s -X POST localhost:8000/auth/register \
+  -H 'content-type: application/json' \
+  -d '{"username":"testuser","password":"secret123","role":"admin_recipe"}'
+
+TOKEN=$(curl -s -X POST localhost:8000/auth/login \
+  -H 'content-type: application/json' \
+  -d '{"username":"testuser","password":"secret123"}' | python -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+
+# Access with token → 200
+curl -s -H "Authorization: Bearer $TOKEN" localhost:8000/recipes
+
+# Wrong role → 403
+curl -s -H "Authorization: Bearer $TOKEN" localhost:8000/tags
+
+# No token → 401
+curl -s localhost:8000/recipes
+
+pytest tests/test_auth.py -q
+```

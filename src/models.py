@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from sqlmodel import JSON, Column, DateTime, Field, Relationship, SQLModel
 
-from src.enums import DifficultyEnum
+from src.enums import DifficultyEnum, UserRoleEnum
 from src.helper import utc_now
 
 
@@ -81,3 +81,20 @@ class RecipeTag(SQLModel, table=True):
 
     recipe: Recipe = Relationship(back_populates="recipe_tags")
     tag: Tag = Relationship(back_populates="recipe_tags")
+
+
+class User(SQLModel, table=True):
+    __tablename__ = "m_users"
+
+    id: int | None = Field(primary_key=True, default=None)
+    username: str = Field(unique=True, index=True)
+    hashed_password: str = Field()
+    role: UserRoleEnum = Field()
+
+    created_at: datetime = Field(
+        default_factory=utc_now, sa_column=Column(DateTime(timezone=True))
+    )
+    updated_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), onupdate=utc_now),
+    )

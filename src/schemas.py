@@ -2,12 +2,13 @@
 
 from datetime import datetime
 from decimal import Decimal
+import re
 from typing import Any
 
-from pydantic import ConfigDict, field_serializer
+from pydantic import ConfigDict, field_serializer, field_validator
 from sqlmodel import Field, SQLModel
 
-from src.enums import DifficultyEnum
+from src.enums import DifficultyEnum, UserRoleEnum
 from src.models import Tag
 
 
@@ -119,6 +120,34 @@ class RecipeListItem(SQLModel):
     total_min: int  # prep_minutes + cook_minutes
     tag_count: int
 
+class UserCreate(SQLModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    username: str = Field(min_length=3)
+    password: str = Field(min_length=8)
+    role: UserRoleEnum = Field()
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, value: str) -> str:
+        if not re.search(r"[A-Z]", value):
+            raise ValueError("Password must contain at least one uppercase letter.")
+
+        if not re.search(r"[a-z]", value):
+            raise ValueError("Password must contain at least one lowercase letter.")
+
+        if not re.search(r"\d", value):
+            raise ValueError("Password must contain at least one digit.")
+
+        if not re.search(r"[ !@#$%^&*(),.?\":{}|<>_+-]", value):
+            raise ValueError("Password must contain at least one special character.")
+
+        return value
+
+class UserRead(SQLModel):
+    id: int
+    username: str
+    role: UserRoleEnum
 
 # API
 class GenericResponse(SQLModel):
@@ -152,3 +181,12 @@ class TagIndexResponse(GenericResponse):
 
 class TagShowResponse(GenericResponse):
     data: Tag
+
+class TokenResponse(SQLModel):
+    access_token: str
+    token_type: str = "bearer"
+
+class TokenPayload(SQLModel):
+    sub: int
+    role: UserRoleEnum
+    exp: datetime

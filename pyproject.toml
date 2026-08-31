@@ -11,7 +11,9 @@ dependencies = [
     "pydantic-settings",
     "sqlmodel",
     "pytest",
-    "httpx2"
+    "httpx2",
+    "pyjwt",
+    "pwdlib[argon2]"
 ]
 
 [tool.pytest.ini_options]
